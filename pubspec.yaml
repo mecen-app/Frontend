@@ -29,6 +29,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  oauth2_client: ^2.4.0
+
+
+  flutter_signin_button: ^2.0.0
 
 
   # The following adds the Cupertino Icons font to your application.

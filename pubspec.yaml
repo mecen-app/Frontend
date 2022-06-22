@@ -29,9 +29,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.0.1
+  webview_flutter: ^3.0.4
+
   oauth2_client: ^2.4.0
-
-
   flutter_signin_button: ^2.0.0
 
 

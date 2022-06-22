@@ -1,87 +1,79 @@
 import 'package:flutter/material.dart';
-import 'package:oauth2_client/access_token_response.dart';
-import 'dart:developer';
-import 'package:oauth2_client/oauth2_helper.dart';
-import 'package:oauth2_client/src/io_web_auth.dart';
-import 'package:oauth2_client/google_oauth2_client.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mecene/cubit/mecene_cubit.dart';
+import 'package:mecene/repositories/mecene_repository.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-
-import 'package:http/http.dart' as http;
-
-//Instantiate an OAuth2Client...
-GoogleOAuth2Client client = GoogleOAuth2Client(
-  customUriScheme: 'com.example.mecene',
-  redirectUri: 'com.example.mecene:/oauth2redirect',
-);
 
 const String clientId = '';
 const String backendHost = '';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MeceneApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MeceneApp extends StatelessWidget {
+  const MeceneApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return RepositoryProvider.value(
+      value: MeceneRepository(host: backendHost, clientId: clientId),
+      child: MaterialApp(
+        title: 'Mecene',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MyHomePage(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      lazy: false,
+      create: (context) => MeceneCubit(context.read<MeceneRepository>()),
+      child: const MyHomeView(),
+    );
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomeView extends StatefulWidget {
+  const MyHomeView({Key? key}) : super(key: key);
+
+  @override
+  State<MyHomeView> createState() => _MyHomeViewState();
+}
+
+class _MyHomeViewState extends State<MyHomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text('Mecene'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SignInButton(
-              Buttons.Google,
-              onPressed: () async {
-                OAuth2Helper oauth2Helper = OAuth2Helper(
-                  client,
-                  grantType: OAuth2Helper.AUTHORIZATION_CODE,
-                  clientId: clientId,
-                  scopes: [
-                    'https://www.googleapis.com/auth/userinfo.email',
-                    'https://www.googleapis.com/auth/userinfo.profile'
-                  ],
-                  webAuthClient: IoWebAuth(),
-                  webAuthOpts: {'preferEphemeral': true},
-                );
-                oauth2Helper.getToken().then((AccessTokenResponse? response) {
-                  log(name: 'ID', response!.respMap['id_token']);
-                  if ((response.respMap['id_token'] as String).isNotEmpty) {
-                    http.post(Uri(scheme: 'http', host: backendHost, path: 'user', port: 8000), headers: {
-                      'Authorization': 'Bearer ${response.respMap['id_token']}'
-                    }).then((http.Response response) {
-                      log(name: 'Response', response.toString());
-                    }).catchError((error) => print(error));
-                  }
-                });
+          children: [
+            BlocBuilder<MeceneCubit, MeceneState>(
+              builder: (BuildContext context, MeceneState state) {
+                debugPrint(state.status.toString());
+
+                if (state.status == AuthenticationStatus.authenticated) {
+                  return const Text('Logged');
+                } else {
+                  return SignInButton(
+                    Buttons.Google,
+                    onPressed: () => context.read<MeceneRepository>().logIn(),
+                  );
+                }
               },
-            )
+            ),
           ],
         ),
       ),

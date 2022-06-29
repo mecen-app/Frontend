@@ -1,20 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mecene/repositories/mecene_repository.dart';
 
-enum AuthenticationStatus { unknown, authenticated, unauthenticated }
+class MeceneState {
+  bool logged;
 
-class MeceneState extends Equatable {
-  late AuthenticationStatus status;
-
-  MeceneState(bool logged) {
-    status = logged ? AuthenticationStatus.authenticated : AuthenticationStatus.unauthenticated;
-  }
+  MeceneState(this.logged);
 }
-
-class Equatable {}
 
 class MeceneCubit extends Cubit<MeceneState> {
   final MeceneRepository _meceneRepository;
 
-  MeceneCubit(this._meceneRepository) : super(MeceneState(_meceneRepository.logged));
+  MeceneCubit(this._meceneRepository) : super(MeceneState(false)) {
+    _meceneRepository.getTokenFromStorage().then((token) {
+      if (token != null) {
+        state.logged = _meceneRepository.logged;
+        emit(state);
+      }
+    });
+  }
 }

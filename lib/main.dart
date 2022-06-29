@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mecene/cubit/mecene_cubit.dart';
@@ -16,8 +18,8 @@ class MeceneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value(
-      value: MeceneRepository(host: backendHost, clientId: clientId),
+    return RepositoryProvider(
+      create: (_) => MeceneRepository(host: backendHost, clientId: clientId),
       child: MaterialApp(
         title: 'Mecene',
         theme: ThemeData(
@@ -62,9 +64,9 @@ class _MyHomeViewState extends State<MyHomeView> {
           children: [
             BlocBuilder<MeceneCubit, MeceneState>(
               builder: (BuildContext context, MeceneState state) {
-                debugPrint(state.status.toString());
+                log(name: 'BlocBuilder', '${state.logged}');
 
-                if (state.status == AuthenticationStatus.authenticated) {
+                if (state.logged) {
                   return const Text('Logged');
                 } else {
                   return SignInButton(

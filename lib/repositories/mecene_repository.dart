@@ -7,8 +7,6 @@ import 'package:oauth2_client/src/io_web_auth.dart';
 import 'package:oauth2_client/google_oauth2_client.dart';
 import 'package:oauth2_client/oauth2_helper.dart';
 
-
-
 class MeceneRepository {
   final String host;
   final String clientId;
@@ -29,17 +27,6 @@ class MeceneRepository {
       webAuthClient: IoWebAuth(),
       webAuthOpts: {'preferEphemeral': true},
     );
-
-    _oauth2Helper.getTokenFromStorage().then((AccessTokenResponse? response) {
-      _token = response;
-      log(name: "MeceneRepository", '$_token');
-
-      if (response != null) {
-        if (response.isExpired()) {
-          _oauth2Helper.refreshToken(response);
-        }
-      }
-    });
   }
 
   bool get logged => _token != null;
@@ -48,13 +35,27 @@ class MeceneRepository {
     _token = await _oauth2Helper.getToken();
 
     if (_token != null) {
-      Response response = await post(Uri.parse(host), headers: {'Authorization': 'Bearer ${_token!.respMap['id_token']}'});
+      //Response response = await post(Uri.parse(host), headers: {'Authorization': 'Bearer ${_token!.respMap['id_token']}'});
 
-      if (response.statusCode == 200) {
+      /*if (response.statusCode == 200) {
         return true;
-      }
+      }*/
     }
     return false;
+  }
+
+  Future<AccessTokenResponse?> getTokenFromStorage() async {
+    return _oauth2Helper.getTokenFromStorage().then((AccessTokenResponse? response) {
+      log(name: "MeceneRepository", '$response');
+
+      _token = response;
+      if (response != null) {
+        if (response.isExpired()) {
+          _oauth2Helper.refreshToken(response);
+        }
+      }
+      return response;
+    });
   }
 
   void logOut() {
